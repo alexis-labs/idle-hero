@@ -7,11 +7,11 @@ Idle Hero is a browser-based idle RPG prototype built with React, TypeScript, Vi
 ## Features
 
 - Data-driven skills, items, actions, monsters, drops, equipment, map tiles, puzzles, shop upgrades, and achievements.
-- Procedural seed-based adventure map with fog-of-war, timed travel, secrets, puzzles, NPC events, treasure, and embedded encounters.
+- Three.js hex-atlas adventure map with fog-of-war, timed travel, pan/zoom controls, secrets, puzzles, NPC events, treasure, and embedded encounters.
 - Idle skilling loop with XP, mastery XP, resource gathering, processing, crafting, and bank storage.
 - Tick-based encounter combat inside the map, with equipment requirements, auto-eating food, monster drops, and boss tiles.
 - Local save system with export/import support and capped offline progression.
-- Three.js 2D orthographic scene synchronized with the current activity.
+- Three.js 2D orthographic scenes for the ambient activity backdrop and the interactive map canvas.
 - React UI split into focused views for the map, skills, bank, shop, achievements, settings, and activity logs.
 
 ## Tech Stack
@@ -53,7 +53,7 @@ The Vite server runs on `http://127.0.0.1:5173` by default.
 src/
 	app/       React game provider, reducer, and dispatch actions
 	data/      Declarative game content such as skills, items, actions, monsters, map generation, shop entries, and achievements
-	game/      Three.js canvas integration and scene rendering
+	game/      Three.js canvas integration, ambient scene rendering, and the interactive map atlas
 	styles/    Global application styles
 	systems/   Game logic for map travel, encounters, idle actions, formulas, saves, offline progress, achievements, and state utilities
 	types/     Shared TypeScript game model definitions
