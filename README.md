@@ -6,12 +6,13 @@ Idle Hero is a browser-based idle RPG prototype built with React, TypeScript, Vi
 
 ## Features
 
-- Data-driven skills, items, actions, monsters, drops, equipment, shop upgrades, and achievements.
+- Data-driven skills, items, actions, monsters, drops, equipment, map tiles, puzzles, shop upgrades, and achievements.
+- Procedural seed-based adventure map with fog-of-war, timed travel, secrets, puzzles, NPC events, treasure, and embedded encounters.
 - Idle skilling loop with XP, mastery XP, resource gathering, processing, crafting, and bank storage.
-- Tick-based combat with equipment requirements, auto-eating food, monster drops, and dungeon progression.
+- Tick-based encounter combat inside the map, with equipment requirements, auto-eating food, monster drops, and boss tiles.
 - Local save system with export/import support and capped offline progression.
 - Three.js 2D orthographic scene synchronized with the current activity.
-- React UI split into focused views for skills, combat, bank, shop, achievements, settings, and activity logs.
+- React UI split into focused views for the map, skills, bank, shop, achievements, settings, and activity logs.
 
 ## Tech Stack
 
@@ -51,10 +52,10 @@ The Vite server runs on `http://127.0.0.1:5173` by default.
 ```text
 src/
 	app/       React game provider, reducer, and dispatch actions
-	data/      Declarative game content such as skills, items, actions, monsters, shop entries, and achievements
+	data/      Declarative game content such as skills, items, actions, monsters, map generation, shop entries, and achievements
 	game/      Three.js canvas integration and scene rendering
 	styles/    Global application styles
-	systems/   Game logic for combat, idle actions, formulas, saves, offline progress, achievements, and state utilities
+	systems/   Game logic for map travel, encounters, idle actions, formulas, saves, offline progress, achievements, and state utilities
 	types/     Shared TypeScript game model definitions
 	ui/        React views and reusable UI components
 ```
@@ -66,7 +67,7 @@ For a deeper technical overview, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md
 - Most new gameplay content should start in `src/data` and reuse the existing types in `src/types/game.ts`.
 - Core gameplay behavior belongs in `src/systems`; UI components should mostly dispatch actions and render state.
 - Saves are client-side only and stored in browser `localStorage` under the current save key.
-- Offline progression is capped at 24 hours and currently applies to active skilling actions.
+- Offline progression is capped at 24 hours and currently applies to active skilling actions and pending map travel.
 - There is no backend service, account system, or multiplayer layer.
 
 ## Contributing
@@ -81,10 +82,10 @@ npm run build
 
 ## Roadmap Ideas
 
-- Expand implemented skills and action chains.
+- Expand implemented skills, action chains, map biomes, NPC stories, puzzle pools, and secret tile events.
 - Add tests around formulas, save hydration, offline progression, and combat outcomes.
 - Improve keyboard accessibility and reduced-motion behavior.
-- Add more monsters, dungeons, achievements, pets, and item tiers.
+- Add more monsters, boss routes, achievements, pets, and item tiers.
 - Add contributor-facing balance notes for XP, rewards, and combat tuning.
 
 ## License

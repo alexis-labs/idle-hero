@@ -1259,6 +1259,7 @@ button:disabled {
 
 .map-tile {
   --tile-color: #38bdf8;
+  --card-color: var(--tile-color);
   position: relative;
   display: grid;
   place-items: center;
@@ -1673,9 +1674,32 @@ button:disabled {
 
   .skill-summary-strip,
   .combat-dashboard,
+  .map-status-strip,
+  .map-layout,
+  .map-lower-panels,
   .bank-toolbar,
   .bank-content {
     grid-template-columns: 1fr;
+  }
+
+  .adventure-grid {
+    grid-template-columns: repeat(var(--map-size), minmax(30px, 1fr));
+    gap: 4px;
+    padding: 8px;
+    overflow-x: auto;
+  }
+
+  .map-tile {
+    min-width: 34px;
+    padding: 4px 2px;
+  }
+
+  .map-tile span {
+    display: none;
+  }
+
+  .map-detail-panel {
+    position: static;
   }
 
   .item-detail-panel {
