@@ -1,8 +1,8 @@
-import { Compass, HeartPulse, Map as MapIcon, Search, Shield, Square, Swords, Utensils } from 'lucide-react';
+import { Compass, Flag, HeartPulse, Map as MapIcon, RefreshCcw, Search, Shield, Square, Swords, Utensils } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useMemo } from 'react';
 import { useGame } from '../app/useGameStore';
-import { coordKey, generateMapTile, getMapTile, getVisibleCoords, isAdjacentCoord, isSameCoord, mapPuzzles, mapTileMeta, MAP_VIEW_RADIUS, parseCoordKey } from '../data/map';
+import { coordKey, getMapTile, getRunCoords, getRunMapSize, isAdjacentCoord, isSameCoord, mapPuzzles, mapTileMeta, parseCoordKey } from '../data/map';
 import { items } from '../data/items';
 import { monstersById } from '../data/monsters';
 import { formatNumber, getMaxPlayerHp, getPlayerCombatStats } from '../systems/formulas';
@@ -76,7 +76,7 @@ export function MapView() {
   const destinationKey = state.map.destination ? coordKey(state.map.destination) : null;
   const selectedKey = state.map.selectedTileKey ?? currentKey;
   const selectedCoord = parseCoordKey(selectedKey);
-  const selectedTile = state.map.knownTiles[selectedKey] ?? generateMapTile(state.map.seed, selectedCoord);
+  const selectedTile = state.map.knownTiles[selectedKey] ?? getMapTile(state.map, selectedCoord);
   const selectedRevealed = Boolean(state.map.revealed[selectedKey]);
   const selectedCurrent = selectedTile.key === currentKey;
   const selectedAdjacent = isAdjacentCoord(state.map.position, selectedTile.coord);
@@ -85,14 +85,16 @@ export function MapView() {
   const activePuzzle = selectedCurrent && !selectedCompleted && selectedPuzzle ? selectedPuzzle : null;
   const currentTile = getMapTile(state.map, state.map.position);
   const travelProgress = state.map.destination ? state.map.travelProgressMs / Math.max(1, state.map.travelIntervalMs) : 0;
+  const runMapSize = getRunMapSize(state.map.bounds);
+  const runComplete = state.map.runStatus !== 'active';
 
   const visibleTiles = useMemo(() => {
-    return getVisibleCoords(state.map.position, MAP_VIEW_RADIUS).map((coord) => {
+    return getRunCoords(state.map.bounds).map((coord) => {
       const key = coordKey(coord);
       return {
         coord,
         key,
-        tile: state.map.knownTiles[key] ?? generateMapTile(state.map.seed, coord),
+        tile: state.map.knownTiles[key] ?? getMapTile(state.map, coord),
         revealed: Boolean(state.map.revealed[key]),
         completed: Boolean(state.map.completed[key]),
         current: isSameCoord(coord, state.map.position),
@@ -101,11 +103,14 @@ export function MapView() {
         adjacent: isAdjacentCoord(state.map.position, coord),
       };
     });
-  }, [destinationKey, selectedKey, state.map.completed, state.map.knownTiles, state.map.position, state.map.revealed, state.map.seed]);
+  }, [destinationKey, selectedKey, state.map]);
 
   const handleTileClick = (tile: MapTile, revealed: boolean, adjacent: boolean, current: boolean) => {
-    if (!revealed) return;
-    if (adjacent && !current && !state.map.destination && state.combat.mode === 'idle') {
+    if (!revealed) {
+      dispatch({ type: 'selectMapTile', x: tile.coord.x, y: tile.coord.y });
+      return;
+    }
+    if (adjacent && !current && !state.map.destination && state.combat.mode === 'idle' && state.map.runStatus === 'active') {
       dispatch({ type: 'startMapTravel', x: tile.coord.x, y: tile.coord.y });
       return;
     }
@@ -117,20 +122,27 @@ export function MapView() {
       <div className="view-header" style={{ '--view-color': currentTile.color } as CSSProperties}>
         <div className="view-title-block">
           <span className="view-icon"><MapIcon size={24} strokeWidth={2.35} /></span>
-          <span className="eyebrow">Procedural map seed {state.map.seed}</span>
+          <span className="eyebrow">Run {state.map.runId} · seed {state.map.seed} · {state.map.runStatus}</span>
           <h2>{currentTile.name}</h2>
           <p>Navigate the fog one step at a time. Secrets, puzzles, NPCs and fights are discovered by travelling through the grid.</p>
         </div>
-        <div className="level-badge map-coordinate-badge">
-          <span>Position</span>
-          <strong>{state.map.position.x},{state.map.position.y}</strong>
+        <div className="map-header-actions">
+          <div className="level-badge map-coordinate-badge">
+            <span>Position</span>
+            <strong>{state.map.position.x},{state.map.position.y}</strong>
+          </div>
+          {runComplete ? (
+            <button className="secondary-button map-run-button" onClick={() => dispatch({ type: 'startNewMapRun' })}><RefreshCcw size={15} />New Run</button>
+          ) : (
+            <button className="secondary-button map-run-button" disabled={state.combat.mode !== 'idle'} onClick={() => dispatch({ type: 'retireMapRun' })}><Flag size={15} />Retire</button>
+          )}
         </div>
       </div>
 
       <div className="map-status-strip">
         <div className="map-status-card">
-          <span className="inline-icon-value"><Compass size={16} />Current</span>
-          <strong>{currentTile.biome}</strong>
+          <span className="inline-icon-value"><Flag size={16} />Run</span>
+          <strong>{state.map.runStatus}</strong>
         </div>
         <div className="map-status-card">
           <span>Discovered</span>
@@ -146,7 +158,7 @@ export function MapView() {
       </div>
 
       <div className="map-layout">
-        <div className="adventure-grid" style={{ '--map-size': MAP_VIEW_RADIUS * 2 + 1 } as CSSProperties}>
+        <div className="adventure-grid" style={{ '--map-columns': runMapSize.columns, '--map-rows': runMapSize.rows } as CSSProperties}>
           {visibleTiles.map(({ tile, key, revealed, completed, current, destination, selected, adjacent }) => {
             const Icon = getMapTileIcon(tile.type);
             return (

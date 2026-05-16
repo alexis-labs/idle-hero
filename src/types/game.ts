@@ -168,6 +168,15 @@ export interface MapCoord {
   y: number;
 }
 
+export interface MapBounds {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+export type MapRunStatus = 'active' | 'victory' | 'defeated' | 'retired';
+
 export type MapTileType =
   | 'origin'
   | 'plains'
@@ -216,7 +225,11 @@ export interface MapPuzzleDefinition {
 }
 
 export interface MapState {
+  runId: number;
+  runStatus: MapRunStatus;
   seed: number;
+  bounds: MapBounds;
+  origin: MapCoord;
   position: MapCoord;
   destination: MapCoord | null;
   travelProgressMs: number;
@@ -228,6 +241,9 @@ export interface MapState {
   selectedTileKey: MapTileKey | null;
   activeTileKey: MapTileKey | null;
   activePuzzleId: MapPuzzleId | null;
+  bossTileKey: MapTileKey | null;
+  runStartedAt: number;
+  runCompletedAt: number | null;
   secretsFound: number;
   bossesDefeated: number;
   mapLog: LogEntry[];

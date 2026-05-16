@@ -5,7 +5,7 @@ import { skills, skillsById } from '../data/skills';
 import type { EquipmentSlot, GameState, ItemId, ItemQuantity, LogEntry, RewardRoll, SkillId } from '../types/game';
 import { getUsedBankSlots, levelForXp, rollQuantity, xpForLevel } from './formulas';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export function cloneState(state: GameState): GameState {
   return JSON.parse(JSON.stringify(state)) as GameState;
@@ -65,7 +65,7 @@ export function createInitialState(now = Date.now()): GameState {
         id: `log-${now}`,
         time: now,
         tone: 'info',
-        message: 'Welcome to Idle Hero. The map begins at camp. Choose a route and uncover what waits in the fog.',
+        message: 'Welcome to Idle Hero. Run 1 begins at camp. The map is fixed until the expedition ends.',
       },
     ],
     offlineSummary: null,

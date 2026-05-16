@@ -62,6 +62,10 @@ function finishMonster(state: GameState): void {
     state.map.selectedTileKey = tileKey;
     if (tile?.secret) state.map.secretsFound += 1;
     if (tile?.type === 'boss') state.map.bossesDefeated += 1;
+    if (tileKey === state.map.bossTileKey || tile?.type === 'boss') {
+      state.map.runStatus = 'victory';
+      state.map.runCompletedAt = Date.now();
+    }
     state.combat.mode = 'idle';
     state.combat.activeMonsterId = null;
     state.combat.dungeonId = null;
@@ -71,6 +75,9 @@ function finishMonster(state: GameState): void {
     state.combat.monsterProgressMs = 0;
     state.combat.mapTileKey = null;
     addLog(state, 'success', `${tile?.name ?? 'Map encounter'} secured.`);
+    if (tileKey === state.map.bossTileKey || tile?.type === 'boss') {
+      addLog(state, 'success', `Run ${state.map.runId} cleared. A new route can now be drawn.`);
+    }
     return;
   }
 

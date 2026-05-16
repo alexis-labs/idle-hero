@@ -8,7 +8,7 @@ import { syncAchievements } from '../systems/achievementSystem';
 import { collectManualFood, processCombatTick, startDungeon, startMonsterFight, stopCombat } from '../systems/combatSystem';
 import { getSkillLevel, meetsEquipmentRequirements } from '../systems/formulas';
 import { processActiveAction, stopActiveAction } from '../systems/idleSystem';
-import { processMapTick, resolveMapTile, selectMapTile, solveMapPuzzle, startMapTravel } from '../systems/mapSystem';
+import { processMapTick, resolveMapTile, retireMapRun, selectMapTile, solveMapPuzzle, startMapTravel, startNewMapRun } from '../systems/mapSystem';
 import { clearSave, importSave, loadGame, saveGame } from '../systems/saveSystem';
 import { addItem, addLog, cloneState, createInitialState, removeItem } from '../systems/stateUtils';
 
@@ -25,6 +25,8 @@ type StoreAction =
   | { type: 'startMapTravel'; x: number; y: number }
   | { type: 'resolveMapTile'; tileKey?: string }
   | { type: 'solveMapPuzzle'; tileKey: string; choiceId: string }
+  | { type: 'startNewMapRun' }
+  | { type: 'retireMapRun' }
   | { type: 'equipItem'; itemId: ItemId }
   | { type: 'unequipItem'; slot: EquipmentSlot }
   | { type: 'useFood'; itemId: ItemId }
@@ -169,6 +171,14 @@ function reducer(state: GameState, action: StoreAction): GameState {
 
     case 'solveMapPuzzle':
       solveMapPuzzle(next, action.tileKey, action.choiceId);
+      return next;
+
+    case 'startNewMapRun':
+      startNewMapRun(next);
+      return next;
+
+    case 'retireMapRun':
+      retireMapRun(next);
       return next;
 
     case 'equipItem': {

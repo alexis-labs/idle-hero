@@ -1,7 +1,14 @@
-import type { MapCoord, MapPuzzleDefinition, MapState, MapTile, MapTileType, MonsterId, RewardRoll } from '../types/game';
+import type { MapBounds, MapCoord, MapPuzzleDefinition, MapState, MapTile, MapTileType, MonsterId, RewardRoll } from '../types/game';
 
 export const MAP_VIEW_RADIUS = 6;
+export const RUN_MAP_RADIUS = MAP_VIEW_RADIUS;
 export const BASE_TRAVEL_INTERVAL_MS = 2200;
+export const DEFAULT_RUN_BOUNDS: MapBounds = {
+  minX: -RUN_MAP_RADIUS,
+  maxX: RUN_MAP_RADIUS,
+  minY: -RUN_MAP_RADIUS,
+  maxY: RUN_MAP_RADIUS,
+};
 
 export const mapTileMeta: Record<MapTileType, { label: string; color: string; short: string }> = {
   origin: { label: 'Camp', color: '#38bdf8', short: 'Safe camp and survey point.' },
@@ -104,6 +111,27 @@ export function getVisibleCoords(center: MapCoord, radius = MAP_VIEW_RADIUS): Ma
   return coords;
 }
 
+export function isCoordWithinBounds(coord: MapCoord, bounds: MapBounds): boolean {
+  return coord.x >= bounds.minX && coord.x <= bounds.maxX && coord.y >= bounds.minY && coord.y <= bounds.maxY;
+}
+
+export function getRunCoords(bounds: MapBounds = DEFAULT_RUN_BOUNDS): MapCoord[] {
+  const coords: MapCoord[] = [];
+  for (let y = bounds.minY; y <= bounds.maxY; y += 1) {
+    for (let x = bounds.minX; x <= bounds.maxX; x += 1) {
+      coords.push({ x, y });
+    }
+  }
+  return coords;
+}
+
+export function getRunMapSize(bounds: MapBounds = DEFAULT_RUN_BOUNDS): { columns: number; rows: number } {
+  return {
+    columns: bounds.maxX - bounds.minX + 1,
+    rows: bounds.maxY - bounds.minY + 1,
+  };
+}
+
 function hash(seed: number, coord: MapCoord, salt: number): number {
   let value = seed ^ Math.imul(coord.x + 374761393, 668265263) ^ Math.imul(coord.y + 1442695041, 2246822519) ^ Math.imul(salt, 3266489917);
   value = Math.imul(value ^ (value >>> 15), 2246822507);
@@ -130,6 +158,19 @@ function puzzleForCoord(seed: number, coord: MapCoord): string {
   return pick(Object.keys(mapPuzzles), seed, coord, 30);
 }
 
+export function createMapSeed(): number {
+  return Math.floor(100000 + Math.random() * 900000);
+}
+
+export function chooseRunBossCoord(seed: number, bounds: MapBounds = DEFAULT_RUN_BOUNDS): MapCoord {
+  const coords = getRunCoords(bounds).filter((coord) => {
+    return manhattanDistance(coord) >= RUN_MAP_RADIUS + 3 && isCoordWithinBounds(coord, bounds) && !isSameCoord(coord, { x: 0, y: 0 });
+  });
+  const fallback = { x: bounds.maxX, y: bounds.maxY };
+  if (!coords.length) return fallback;
+  return coords[Math.floor(randomAt(seed, fallback, 42) * coords.length) % coords.length];
+}
+
 function rewardsForTile(type: MapTileType, distance: number): RewardRoll[] {
   if (type === 'treasure') return [{ gp: 20 + distance * 9, quantity: 1, chance: 1 }, { itemId: 'vault_key', quantity: 1, chance: distance > 3 ? 0.25 : 0.08 }];
   if (type === 'grove') return [{ itemId: distance > 3 ? 'oak_log' : 'normal_log', quantity: 3 + Math.floor(distance / 2), chance: 1 }];
@@ -141,12 +182,13 @@ function rewardsForTile(type: MapTileType, distance: number): RewardRoll[] {
   return [];
 }
 
-function chooseTileType(seed: number, coord: MapCoord): MapTileType {
+function chooseTileType(seed: number, coord: MapCoord, bossCoord: MapCoord | null = null): MapTileType {
   const distance = manhattanDistance(coord);
   if (distance === 0) return 'origin';
+  if (bossCoord && isSameCoord(coord, bossCoord)) return 'boss';
 
   const roll = randomAt(seed, coord, 1);
-  if (distance >= 6 && roll > 0.92) return 'boss';
+  if (distance >= 6 && roll > 0.9) return 'encounter';
   if (roll > 0.76) return 'encounter';
   if (roll > 0.66) return 'treasure';
   if (roll > 0.56) return 'puzzle';
@@ -161,10 +203,10 @@ function chooseTileType(seed: number, coord: MapCoord): MapTileType {
   return 'plains';
 }
 
-export function generateMapTile(seed: number, coord: MapCoord): MapTile {
+export function generateMapTile(seed: number, coord: MapCoord, bossCoord: MapCoord | null = null): MapTile {
   const key = coordKey(coord);
   const distance = manhattanDistance(coord);
-  const type = chooseTileType(seed, coord);
+  const type = chooseTileType(seed, coord, bossCoord);
   const meta = mapTileMeta[type];
   const biome = pick(['Greenrise', 'Lowrock', 'Glasswater', 'Emberfall', 'Old Vale'], seed, coord, 3);
   const secret = randomAt(seed, coord, 4) > 0.92 && distance > 1;
@@ -192,19 +234,34 @@ export function generateMapTile(seed: number, coord: MapCoord): MapTile {
   return tile;
 }
 
-export function createInitialMapState(seed = Math.floor(100000 + Math.random() * 900000)): MapState {
+export function createRunMap(seed: number, bounds: MapBounds = DEFAULT_RUN_BOUNDS, bossCoord = chooseRunBossCoord(seed, bounds)): Record<string, MapTile> {
+  return getRunCoords(bounds).reduce<Record<string, MapTile>>((tiles, coord) => {
+    const tile = generateMapTile(seed, coord, bossCoord);
+    tiles[tile.key] = tile;
+    return tiles;
+  }, {});
+}
+
+export function createInitialMapState(seed = createMapSeed(), runId = 1, bounds: MapBounds = DEFAULT_RUN_BOUNDS): MapState {
   const position = { x: 0, y: 0 };
-  const knownTiles: MapState['knownTiles'] = {};
+  const origin = { x: 0, y: 0 };
+  const bossCoord = chooseRunBossCoord(seed, bounds);
+  const knownTiles = createRunMap(seed, bounds, bossCoord);
   const revealed: MapState['revealed'] = {};
   [position, ...getAdjacentCoords(position)].forEach((coord) => {
-    const tile = generateMapTile(seed, coord);
+    if (!isCoordWithinBounds(coord, bounds)) return;
+    const tile = knownTiles[coordKey(coord)] ?? generateMapTile(seed, coord, bossCoord);
     knownTiles[tile.key] = tile;
     revealed[tile.key] = true;
   });
 
   const originKey = coordKey(position);
   return {
+    runId,
+    runStatus: 'active',
     seed,
+    bounds,
+    origin,
     position,
     destination: null,
     travelProgressMs: 0,
@@ -216,6 +273,9 @@ export function createInitialMapState(seed = Math.floor(100000 + Math.random() *
     selectedTileKey: originKey,
     activeTileKey: originKey,
     activePuzzleId: null,
+    bossTileKey: coordKey(bossCoord),
+    runStartedAt: Date.now(),
+    runCompletedAt: null,
     secretsFound: 0,
     bossesDefeated: 0,
     mapLog: [],
@@ -223,28 +283,40 @@ export function createInitialMapState(seed = Math.floor(100000 + Math.random() *
 }
 
 export function normalizeMapState(candidate?: Partial<MapState>): MapState {
-  const base = createInitialMapState(candidate?.seed);
+  const seed = candidate?.seed ?? createMapSeed();
+  const bounds = candidate?.bounds ?? DEFAULT_RUN_BOUNDS;
+  const base = createInitialMapState(seed, candidate?.runId ?? 1, bounds);
   if (!candidate) return base;
+
+  const candidatePosition = candidate.position && isCoordWithinBounds(candidate.position, bounds) ? candidate.position : base.position;
+  const candidateDestination = candidate.destination && isCoordWithinBounds(candidate.destination, bounds) ? candidate.destination : null;
 
   const map: MapState = {
     ...base,
     ...candidate,
-    position: candidate.position ?? base.position,
-    destination: candidate.destination ?? null,
+    runId: candidate.runId ?? base.runId,
+    runStatus: candidate.runStatus ?? base.runStatus,
+    bounds,
+    origin: candidate.origin ?? base.origin,
+    position: candidatePosition,
+    destination: candidateDestination,
     revealed: { ...base.revealed, ...(candidate.revealed ?? {}) },
     explored: { ...base.explored, ...(candidate.explored ?? {}) },
     completed: { ...base.completed, ...(candidate.completed ?? {}) },
-    knownTiles: { ...base.knownTiles, ...(candidate.knownTiles ?? {}) },
+    knownTiles: base.knownTiles,
+    bossTileKey: candidate.bossTileKey && base.knownTiles[candidate.bossTileKey] ? candidate.bossTileKey : base.bossTileKey,
+    runStartedAt: candidate.runStartedAt ?? base.runStartedAt,
+    runCompletedAt: candidate.runCompletedAt ?? base.runCompletedAt,
     mapLog: candidate.mapLog ?? base.mapLog,
   };
 
   const currentKey = coordKey(map.position);
-  if (!map.knownTiles[currentKey]) map.knownTiles[currentKey] = generateMapTile(map.seed, map.position);
+  if (!map.knownTiles[currentKey]) map.knownTiles[currentKey] = generateMapTile(map.seed, map.position, map.bossTileKey ? parseCoordKey(map.bossTileKey) : null);
   map.revealed[currentKey] = true;
   map.explored[currentKey] = true;
   return map;
 }
 
 export function getMapTile(map: MapState, coord: MapCoord): MapTile {
-  return map.knownTiles[coordKey(coord)] ?? generateMapTile(map.seed, coord);
+  return map.knownTiles[coordKey(coord)] ?? generateMapTile(map.seed, coord, map.bossTileKey ? parseCoordKey(map.bossTileKey) : null);
 }

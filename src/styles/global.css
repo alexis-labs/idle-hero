@@ -1440,6 +1440,20 @@ button:disabled {
   font-size: 20px;
 }
 
+.map-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.map-run-button {
+  width: auto;
+  min-height: 34px;
+  margin-top: 0;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
 .map-status-card,
 .map-detail-panel,
 .map-encounter-panel,
@@ -1486,10 +1500,11 @@ button:disabled {
 }
 
 .adventure-grid {
-  --map-size: 13;
+  --map-columns: 13;
+  --map-rows: 13;
   display: grid;
-  grid-template-rows: repeat(var(--map-size), minmax(0, 1fr));
-  grid-template-columns: repeat(var(--map-size), minmax(32px, 1fr));
+  grid-template-rows: repeat(var(--map-rows), minmax(0, 1fr));
+  grid-template-columns: repeat(var(--map-columns), minmax(32px, 1fr));
   gap: 4px;
   min-height: 0;
   padding: 8px;
@@ -1963,7 +1978,8 @@ button:disabled {
   }
 
   .adventure-grid {
-    grid-template-columns: repeat(var(--map-size), minmax(30px, 1fr));
+    grid-template-rows: repeat(var(--map-rows), minmax(30px, 1fr));
+    grid-template-columns: repeat(var(--map-columns), minmax(30px, 1fr));
     gap: 4px;
     padding: 8px;
     overflow-x: auto;
