@@ -165,69 +165,71 @@ export function MapView() {
           })}
         </div>
 
-        <aside className="map-detail-panel">
-          {selectedRevealed ? (
-            <>
-              <div className="map-detail-head">
-                <TileBadge tile={selectedTile} />
-                <span>{selectedTile.coord.x},{selectedTile.coord.y}</span>
-              </div>
-              <h3>{selectedTile.name}</h3>
-              <p>{selectedTile.description}</p>
-              <div className="stat-grid">
-                <span>Danger</span><strong>{selectedTile.danger}</strong>
-                <span>Travel</span><strong>{(selectedTile.travelTimeMs / 1000).toFixed(1)}s</strong>
-                <span>Status</span><strong>{selectedCompleted ? 'Completed' : selectedCurrent ? 'Here' : selectedAdjacent ? 'Adjacent' : 'Distant'}</strong>
-              </div>
-              {selectedTile.monsterId && <p className="map-hint"><Shield size={15} /> Encounter: {monstersById[selectedTile.monsterId]?.name}</p>}
-              {selectedTile.rewards?.length ? <div className="reward-line">{selectedTile.rewards.map((reward, index) => <RewardPill key={`${selectedTile.key}-${index}`} reward={reward} />)}</div> : null}
-              {!selectedCurrent && selectedAdjacent && (
-                <button className="primary-button" disabled={Boolean(state.map.destination) || state.combat.mode !== 'idle'} onClick={() => dispatch({ type: 'startMapTravel', x: selectedTile.coord.x, y: selectedTile.coord.y })}>
-                  <Compass size={16} />Travel
-                </button>
-              )}
-              {selectedCurrent && !selectedCompleted && selectedTile.type !== 'encounter' && selectedTile.type !== 'boss' && selectedTile.type !== 'puzzle' && (
-                <button className="primary-button" onClick={() => dispatch({ type: 'resolveMapTile', tileKey: selectedTile.key })}>
-                  <Search size={16} />Search
-                </button>
-              )}
-              {selectedCurrent && !selectedCompleted && (selectedTile.type === 'encounter' || selectedTile.type === 'boss') && state.combat.mode === 'idle' && (
-                <button className="primary-button" onClick={() => dispatch({ type: 'resolveMapTile', tileKey: selectedTile.key })}>
-                  <Swords size={16} />Engage
-                </button>
-              )}
-              {activePuzzle && (
-                <div className="puzzle-panel">
-                  <h4>{activePuzzle.title}</h4>
-                  <p>{activePuzzle.prompt}</p>
-                  <div className="puzzle-choice-grid">
-                    {activePuzzle.choices.map((choice) => (
-                      <button key={choice.id} className="secondary-button" onClick={() => dispatch({ type: 'solveMapPuzzle', tileKey: selectedTile.key, choiceId: choice.id })}>{choice.label}</button>
-                    ))}
-                  </div>
+        <div className="map-side-stack">
+          <aside className="map-detail-panel">
+            {selectedRevealed ? (
+              <>
+                <div className="map-detail-head">
+                  <TileBadge tile={selectedTile} />
+                  <span>{selectedTile.coord.x},{selectedTile.coord.y}</span>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="empty-state compact">
-              <h3>Uncharted fog</h3>
-              <p>Move closer to reveal this tile.</p>
-            </div>
-          )}
-        </aside>
-      </div>
+                <h3>{selectedTile.name}</h3>
+                <p>{selectedTile.description}</p>
+                <div className="stat-grid">
+                  <span>Danger</span><strong>{selectedTile.danger}</strong>
+                  <span>Travel</span><strong>{(selectedTile.travelTimeMs / 1000).toFixed(1)}s</strong>
+                  <span>Status</span><strong>{selectedCompleted ? 'Completed' : selectedCurrent ? 'Here' : selectedAdjacent ? 'Adjacent' : 'Distant'}</strong>
+                </div>
+                {selectedTile.monsterId && <p className="map-hint"><Shield size={15} /> Encounter: {monstersById[selectedTile.monsterId]?.name}</p>}
+                {selectedTile.rewards?.length ? <div className="reward-line">{selectedTile.rewards.map((reward, index) => <RewardPill key={`${selectedTile.key}-${index}`} reward={reward} />)}</div> : null}
+                {!selectedCurrent && selectedAdjacent && (
+                  <button className="primary-button" disabled={Boolean(state.map.destination) || state.combat.mode !== 'idle'} onClick={() => dispatch({ type: 'startMapTravel', x: selectedTile.coord.x, y: selectedTile.coord.y })}>
+                    <Compass size={16} />Travel
+                  </button>
+                )}
+                {selectedCurrent && !selectedCompleted && selectedTile.type !== 'encounter' && selectedTile.type !== 'boss' && selectedTile.type !== 'puzzle' && (
+                  <button className="primary-button" onClick={() => dispatch({ type: 'resolveMapTile', tileKey: selectedTile.key })}>
+                    <Search size={16} />Search
+                  </button>
+                )}
+                {selectedCurrent && !selectedCompleted && (selectedTile.type === 'encounter' || selectedTile.type === 'boss') && state.combat.mode === 'idle' && (
+                  <button className="primary-button" onClick={() => dispatch({ type: 'resolveMapTile', tileKey: selectedTile.key })}>
+                    <Swords size={16} />Engage
+                  </button>
+                )}
+                {activePuzzle && (
+                  <div className="puzzle-panel">
+                    <h4>{activePuzzle.title}</h4>
+                    <p>{activePuzzle.prompt}</p>
+                    <div className="puzzle-choice-grid">
+                      {activePuzzle.choices.map((choice) => (
+                        <button key={choice.id} className="secondary-button" onClick={() => dispatch({ type: 'solveMapPuzzle', tileKey: selectedTile.key, choiceId: choice.id })}>{choice.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="empty-state compact">
+                <h3>Uncharted fog</h3>
+                <p>Move closer to reveal this tile.</p>
+              </div>
+            )}
+          </aside>
 
-      <div className="map-lower-panels">
-        <EncounterPanel />
-        <article className="map-log-panel">
-          <div className="panel-title-row"><Utensils size={18} /><h3>Expedition log</h3></div>
-          {(state.map.mapLog.length ? state.map.mapLog : state.activityLog).slice(0, 6).map((entry) => (
-            <div key={entry.id} className={`log-entry ${entry.tone}`}>
-              {state.settings.showLogTimestamps && <span>{new Date(entry.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
-              <p>{entry.message}</p>
-            </div>
-          ))}
-        </article>
+          <div className="map-lower-panels">
+            <EncounterPanel />
+            <article className="map-log-panel">
+              <div className="panel-title-row"><Utensils size={18} /><h3>Expedition log</h3></div>
+              {(state.map.mapLog.length ? state.map.mapLog : state.activityLog).slice(0, 4).map((entry) => (
+                <div key={entry.id} className={`log-entry ${entry.tone}`}>
+                  {state.settings.showLogTimestamps && <span>{new Date(entry.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                  <p>{entry.message}</p>
+                </div>
+              ))}
+            </article>
+          </div>
+        </div>
       </div>
     </section>
   );
