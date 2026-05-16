@@ -1,4 +1,4 @@
-import { Activity, PackageCheck, Shirt, Sparkles } from 'lucide-react';
+import { Activity, Compass, PackageCheck, Shirt, Sparkles } from 'lucide-react';
 import { useGame } from '../app/useGameStore';
 import { actionsById } from '../data/actions';
 import { equipmentSlots, items } from '../data/items';
@@ -13,6 +13,8 @@ export function RightPanel() {
   const selectedSkill = skillsById[state.selectedSkill];
   const equipmentStats = getEquipmentStats(state);
   const petCount = Object.values(state.pets).filter(Boolean).length;
+  const activeMapTile = state.map.activeTileKey ? state.map.knownTiles[state.map.activeTileKey] : null;
+  const selectedMapTile = state.map.selectedTileKey ? state.map.knownTiles[state.map.selectedTileKey] : null;
 
   return (
     <aside className="right-panel">
@@ -26,9 +28,21 @@ export function RightPanel() {
           </div>
         ) : state.combat.mode !== 'idle' ? (
           <div className="focus-block">
-            <strong>Combat loop</strong>
-            <span>{state.combat.mode === 'dungeon' ? 'Dungeon active' : 'Monster active'}</span>
+            <strong>Map encounter</strong>
+            <span>{activeMapTile?.name ?? 'Threat active'}</span>
             <span>HP {Math.ceil(state.combat.playerHp)} / {getMaxPlayerHp(state)}</span>
+          </div>
+        ) : state.map.destination ? (
+          <div className="focus-block">
+            <strong>Travelling</strong>
+            <span>From {state.map.position.x},{state.map.position.y} to {state.map.destination.x},{state.map.destination.y}</span>
+            <span>{Math.round((state.map.travelProgressMs / Math.max(1, state.map.travelIntervalMs)) * 100)}% complete</span>
+          </div>
+        ) : state.activeView === 'map' ? (
+          <div className="focus-block">
+            <strong>{selectedMapTile?.name ?? activeMapTile?.name ?? 'Exploration map'}</strong>
+            <span>Position {state.map.position.x},{state.map.position.y}</span>
+            <span>{Object.keys(state.map.revealed).length} tiles discovered</span>
           </div>
         ) : (
           <div className="focus-block">
@@ -66,7 +80,9 @@ export function RightPanel() {
         <div className="panel-title-row"><PackageCheck size={18} /><h2>Collections</h2></div>
         <div className="collection-row">
           <span>Pets</span><strong>{petCount}</strong>
-          <span>Dungeon clears</span><strong>{state.combat.dungeonClears}</strong>
+          <span className="inline-icon-value"><Compass size={14} />Discovered</span><strong>{Object.keys(state.map.revealed).length}</strong>
+          <span>Bosses defeated</span><strong>{state.map.bossesDefeated}</strong>
+          <span>Secrets found</span><strong>{state.map.secretsFound}</strong>
           <span>Achievements</span><strong>{Object.values(state.achievements).filter(Boolean).length}</strong>
           <span>Total GP</span><strong className="inline-icon-value"><Coins size={14} />{formatNumber(state.gp, state.settings.compactNumbers)}</strong>
         </div>

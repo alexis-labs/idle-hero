@@ -2,7 +2,7 @@ import { GameProvider, useGame } from './app/useGameStore';
 import { GameCanvas } from './game/GameCanvas';
 import { AchievementsView } from './ui/AchievementsView';
 import { BankView } from './ui/BankView';
-import { CombatView } from './ui/CombatView';
+import { MapView } from './ui/MapView';
 import { OfflineModal } from './ui/OfflineModal';
 import { RightPanel } from './ui/RightPanel';
 import { SettingsView } from './ui/SettingsView';
@@ -14,7 +14,7 @@ import { TopBar } from './ui/TopBar';
 function CurrentView() {
   const { state } = useGame();
 
-  if (state.activeView === 'combat') return <CombatView />;
+  if (state.activeView === 'map') return <MapView />;
   if (state.activeView === 'bank') return <BankView />;
   if (state.activeView === 'shop') return <ShopView />;
   if (state.activeView === 'achievements') return <AchievementsView />;

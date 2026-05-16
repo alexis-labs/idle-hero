@@ -1,6 +1,6 @@
 import { dungeonsById, monstersById } from '../data/monsters';
 import { items } from '../data/items';
-import type { GameState, MonsterId } from '../types/game';
+import type { GameState, MapTileKey, MonsterId } from '../types/game';
 import { clamp, getMaxPlayerHp, getPlayerCombatStats, getSkillLevel } from './formulas';
 import { addItem, addLog, addSkillXp, grantRewards, removeItem } from './stateUtils';
 
@@ -53,6 +53,27 @@ function finishMonster(state: GameState): void {
   const rewardText = rewards.length > 0 ? ` Rewards: ${rewards.map((line) => `${line.quantity} ${line.label}`).join(', ')}.` : '';
   addLog(state, 'success', `${monster.name} defeated.${rewardText}`);
 
+  if (state.combat.mapTileKey) {
+    const tileKey = state.combat.mapTileKey;
+    const tile = state.map.knownTiles[tileKey];
+    state.map.completed[tileKey] = true;
+    state.map.activePuzzleId = null;
+    state.map.activeTileKey = tileKey;
+    state.map.selectedTileKey = tileKey;
+    if (tile?.secret) state.map.secretsFound += 1;
+    if (tile?.type === 'boss') state.map.bossesDefeated += 1;
+    state.combat.mode = 'idle';
+    state.combat.activeMonsterId = null;
+    state.combat.dungeonId = null;
+    state.combat.dungeonStep = 0;
+    state.combat.monsterHp = 0;
+    state.combat.playerProgressMs = 0;
+    state.combat.monsterProgressMs = 0;
+    state.combat.mapTileKey = null;
+    addLog(state, 'success', `${tile?.name ?? 'Map encounter'} secured.`);
+    return;
+  }
+
   if (state.combat.mode === 'dungeon' && state.combat.dungeonId) {
     const dungeon = dungeonsById[state.combat.dungeonId];
     const nextStep = state.combat.dungeonStep + 1;
@@ -68,6 +89,7 @@ function finishMonster(state: GameState): void {
       state.combat.dungeonId = null;
       state.combat.dungeonStep = 0;
       state.combat.monsterHp = 0;
+      state.combat.mapTileKey = null;
       return;
     }
 
@@ -144,13 +166,34 @@ export function startMonsterFight(state: GameState, monsterId: MonsterId): void 
 
   state.activeActionId = null;
   state.actionProgressMs = 0;
-  state.activeView = 'combat';
+  state.activeView = 'map';
   state.combat.mode = 'monster';
   state.combat.dungeonId = null;
   state.combat.dungeonStep = 0;
+  state.combat.mapTileKey = null;
   state.combat.playerHp = Math.max(1, Math.min(state.combat.playerHp || getMaxPlayerHp(state), getMaxPlayerHp(state)));
   setActiveMonster(state, monster.id);
   addLog(state, 'info', `Engaging ${monster.name}.`);
+}
+
+export function startMapEncounter(state: GameState, monsterId: MonsterId, tileKey: MapTileKey): void {
+  const monster = monstersById[monsterId];
+  if (!monster) return;
+
+  state.activeActionId = null;
+  state.actionProgressMs = 0;
+  state.activeView = 'map';
+  state.map.destination = null;
+  state.map.travelProgressMs = 0;
+  state.map.activeTileKey = tileKey;
+  state.map.selectedTileKey = tileKey;
+  state.combat.mode = 'monster';
+  state.combat.dungeonId = null;
+  state.combat.dungeonStep = 0;
+  state.combat.mapTileKey = tileKey;
+  state.combat.playerHp = Math.max(1, Math.min(state.combat.playerHp || getMaxPlayerHp(state), getMaxPlayerHp(state)));
+  setActiveMonster(state, monster.id);
+  addLog(state, 'warning', `${monster.name} blocks the route.`);
 }
 
 export function startDungeon(state: GameState, dungeonId: string): void {
@@ -165,10 +208,11 @@ export function startDungeon(state: GameState, dungeonId: string): void {
 
   state.activeActionId = null;
   state.actionProgressMs = 0;
-  state.activeView = 'combat';
+  state.activeView = 'map';
   state.combat.mode = 'dungeon';
   state.combat.dungeonId = dungeon.id;
   state.combat.dungeonStep = 0;
+  state.combat.mapTileKey = null;
   state.combat.playerHp = Math.max(1, Math.min(state.combat.playerHp || getMaxPlayerHp(state), getMaxPlayerHp(state)));
   setActiveMonster(state, dungeon.monsters[0]);
   addLog(state, 'info', `${dungeon.name} started.`);
@@ -182,6 +226,7 @@ export function stopCombat(state: GameState): void {
   state.combat.monsterHp = 0;
   state.combat.playerProgressMs = 0;
   state.combat.monsterProgressMs = 0;
+  state.combat.mapTileKey = null;
 }
 
 export function collectManualFood(state: GameState, itemId: string): void {

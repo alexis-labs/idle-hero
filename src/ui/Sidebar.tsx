@@ -1,4 +1,4 @@
-import { Backpack, Hammer, Swords, Trophy, Settings, ShoppingBag, type LucideIcon } from 'lucide-react';
+import { Backpack, Compass, Hammer, Trophy, Settings, ShoppingBag, type LucideIcon } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { useGame } from '../app/useGameStore';
 import { actionsById } from '../data/actions';
@@ -9,7 +9,7 @@ import { getSkillIcon } from './iconMaps';
 
 const navItems: { view: ViewId; label: string; icon: LucideIcon }[] = [
   { view: 'skills', label: 'Skills', icon: Hammer },
-  { view: 'combat', label: 'Combat', icon: Swords },
+  { view: 'map', label: 'Map', icon: Compass },
   { view: 'bank', label: 'Bank', icon: Backpack },
   { view: 'shop', label: 'Shop', icon: ShoppingBag },
   { view: 'achievements', label: 'Goals', icon: Trophy },

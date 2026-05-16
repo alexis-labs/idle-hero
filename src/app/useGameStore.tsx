@@ -8,6 +8,7 @@ import { syncAchievements } from '../systems/achievementSystem';
 import { collectManualFood, processCombatTick, startDungeon, startMonsterFight, stopCombat } from '../systems/combatSystem';
 import { getSkillLevel, meetsEquipmentRequirements } from '../systems/formulas';
 import { processActiveAction, stopActiveAction } from '../systems/idleSystem';
+import { processMapTick, resolveMapTile, selectMapTile, solveMapPuzzle, startMapTravel } from '../systems/mapSystem';
 import { clearSave, importSave, loadGame, saveGame } from '../systems/saveSystem';
 import { addItem, addLog, cloneState, createInitialState, removeItem } from '../systems/stateUtils';
 
@@ -20,6 +21,10 @@ type StoreAction =
   | { type: 'startCombat'; monsterId: string }
   | { type: 'startDungeon'; dungeonId: string }
   | { type: 'stopCombat' }
+  | { type: 'selectMapTile'; x: number; y: number }
+  | { type: 'startMapTravel'; x: number; y: number }
+  | { type: 'resolveMapTile'; tileKey?: string }
+  | { type: 'solveMapPuzzle'; tileKey: string; choiceId: string }
   | { type: 'equipItem'; itemId: ItemId }
   | { type: 'unequipItem'; slot: EquipmentSlot }
   | { type: 'useFood'; itemId: ItemId }
@@ -66,6 +71,7 @@ function reducer(state: GameState, action: StoreAction): GameState {
   switch (action.type) {
     case 'tick':
       processActiveAction(next, action.deltaMs);
+      processMapTick(next, action.deltaMs);
       processCombatTick(next, action.deltaMs);
       syncAchievements(next);
       return next;
@@ -96,15 +102,19 @@ function reducer(state: GameState, action: StoreAction): GameState {
       }
 
       if (next.combat.mode !== 'idle') {
-        addLog(next, 'warning', `Stop combat before starting ${skill.name}.`);
+        addLog(next, 'warning', `Finish the current encounter before starting ${skill.name}.`);
+        return next;
+      }
+
+      if (next.map.destination) {
+        addLog(next, 'warning', `Finish travelling before starting ${skill.name}.`);
         return next;
       }
 
       const activeSkillingAction = next.activeActionId ? actionsById[next.activeActionId] : null;
       if (activeSkillingAction && activeSkillingAction.skillId !== skillingAction.skillId) {
         const activeSkillName = skillsById[activeSkillingAction.skillId]?.name ?? activeSkillingAction.name;
-        addLog(next, 'warning', `Stop ${activeSkillName} before starting ${skill.name}.`);
-        return next;
+        addLog(next, 'warning', `${activeSkillName} stopped to start ${skill.name}.`);
       }
 
       next.activeActionId = skillingAction.id;
@@ -122,7 +132,7 @@ function reducer(state: GameState, action: StoreAction): GameState {
     case 'startCombat': {
       const activeSkillName = getActiveSkillingName(next);
       if (activeSkillName) {
-        addLog(next, 'warning', `Stop ${activeSkillName} before starting combat.`);
+        addLog(next, 'warning', `Stop ${activeSkillName} before starting an encounter.`);
         return next;
       }
       startMonsterFight(next, action.monsterId);
@@ -132,7 +142,7 @@ function reducer(state: GameState, action: StoreAction): GameState {
     case 'startDungeon': {
       const activeSkillName = getActiveSkillingName(next);
       if (activeSkillName) {
-        addLog(next, 'warning', `Stop ${activeSkillName} before starting combat.`);
+        addLog(next, 'warning', `Stop ${activeSkillName} before starting an encounter.`);
         return next;
       }
       startDungeon(next, action.dungeonId);
@@ -142,6 +152,23 @@ function reducer(state: GameState, action: StoreAction): GameState {
     case 'stopCombat':
       stopCombat(next);
       addLog(next, 'info', 'Combat stopped.');
+      return next;
+
+    case 'selectMapTile':
+      selectMapTile(next, { x: action.x, y: action.y });
+      next.activeView = 'map';
+      return next;
+
+    case 'startMapTravel':
+      startMapTravel(next, { x: action.x, y: action.y });
+      return next;
+
+    case 'resolveMapTile':
+      resolveMapTile(next, action.tileKey);
+      return next;
+
+    case 'solveMapPuzzle':
+      solveMapPuzzle(next, action.tileKey, action.choiceId);
       return next;
 
     case 'equipItem': {

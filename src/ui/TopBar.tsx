@@ -1,4 +1,4 @@
-import { Activity, Backpack, Crown, Download, Hammer, RotateCcw, Save, Swords, Upload } from 'lucide-react';
+import { Activity, Backpack, Compass, Crown, Download, Hammer, RotateCcw, Save, Swords, Upload } from 'lucide-react';
 import { useRef } from 'react';
 import { useGame } from '../app/useGameStore';
 import { exportSave, saveGame } from '../systems/saveSystem';
@@ -8,8 +8,8 @@ import { Coins } from './iconMaps';
 export function TopBar() {
   const { state, dispatch } = useGame();
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const StatusIcon = state.activeActionId ? Hammer : state.combat.mode !== 'idle' ? Swords : Activity;
-  const statusLabel = state.activeActionId ? 'Skilling' : state.combat.mode !== 'idle' ? 'Combat' : 'Idle';
+  const StatusIcon = state.activeActionId ? Hammer : state.combat.mode !== 'idle' ? Swords : state.map.destination ? Compass : Activity;
+  const statusLabel = state.activeActionId ? 'Skilling' : state.combat.mode !== 'idle' ? 'Encounter' : state.map.destination ? 'Travelling' : state.activeView === 'map' ? 'Exploring' : 'Idle';
 
   const exportCurrentSave = () => {
     const blob = new Blob([exportSave(state)], { type: 'application/json' });
@@ -43,6 +43,7 @@ export function TopBar() {
         <span className="stat-chip money-chip"><Coins size={16} />{formatNumber(state.gp, state.settings.compactNumbers)} GP</span>
         <span className="stat-chip"><Backpack size={16} />Bank {getUsedBankSlots(state)} / {state.bankSlots}</span>
         <span className="stat-chip"><StatusIcon size={16} />{statusLabel}</span>
+        {state.activeView === 'map' && <span className="stat-chip"><Compass size={16} />{state.map.position.x},{state.map.position.y}</span>}
       </div>
       <div className="top-actions">
         <button title="Save now" className="icon-button" onClick={() => saveGame(state)}><Save size={18} /></button>

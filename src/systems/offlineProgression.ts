@@ -1,6 +1,7 @@
 import { actionsById } from '../data/actions';
 import { items } from '../data/items';
 import type { GameState, OfflineRewardLine, RewardRoll } from '../types/game';
+import { completeOfflineTravel } from './mapSystem';
 import { addItem, addLog, addSkillXp, cloneState, consumeItems, hasItems } from './stateUtils';
 
 const MAX_OFFLINE_MS = 24 * 60 * 60 * 1000;
@@ -39,12 +40,14 @@ export function applyOfflineProgression(state: GameState, now = Date.now()): Gam
   const next = cloneState(state);
   next.lastSavedAt = now;
 
+  const completedTravel = completeOfflineTravel(next, cappedElapsed);
+
   if (!next.activeActionId) {
     next.offlineSummary = {
       secondsAway: Math.floor(cappedElapsed / 1000),
       capped: elapsed > MAX_OFFLINE_MS,
-      actionName: null,
-      completions: 0,
+      actionName: completedTravel ? 'Map travel' : null,
+      completions: completedTravel ? 1 : 0,
       rewards: [],
       xp: {},
     };

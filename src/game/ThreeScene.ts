@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { actionsById } from '../data/actions';
+import { coordKey, generateMapTile } from '../data/map';
 import { monstersById } from '../data/monsters';
 import { skillsById } from '../data/skills';
-import type { ActionVisualDefinition, GameState } from '../types/game';
+import type { ActionVisualDefinition, GameState, MapTile } from '../types/game';
 import { getPlayerCombatStats } from '../systems/formulas';
 
 export class IdleHeroScene {
@@ -249,6 +250,18 @@ export class IdleHeroScene {
       };
     }
 
+    if (state.activeView === 'map' || state.map.destination || state.map.activePuzzleId) {
+      const coord = state.map.destination ?? state.map.position;
+      const tileKey = coordKey(coord);
+      const tile = state.map.knownTiles[tileKey] ?? generateMapTile(state.map.seed, coord);
+      return {
+        key: `map-${tile.key}-${tile.type}`,
+        definition: { targetName: tile.name, color: tile.color, shape: this.getMapTileShape(tile) },
+        progress: state.map.destination ? Math.min(1, state.map.travelProgressMs / Math.max(1, state.map.travelIntervalMs)) : state.map.activePuzzleId ? 0.72 : 0.2,
+        isMonster: false,
+      };
+    }
+
     if (state.activeActionId) {
       const action = actionsById[state.activeActionId];
       return {
@@ -266,6 +279,16 @@ export class IdleHeroScene {
       progress: 0.001,
       isMonster: false,
     };
+  }
+
+  private getMapTileShape(tile: MapTile): ActionVisualDefinition['shape'] {
+    if (tile.type === 'grove') return 'tree';
+    if (tile.type === 'mine') return 'rock';
+    if (tile.type === 'coast') return 'water';
+    if (tile.type === 'shrine' || tile.type === 'puzzle' || tile.type === 'ruins') return 'runes';
+    if (tile.type === 'treasure' || tile.type === 'npc') return 'workbench';
+    if (tile.type === 'boss' || tile.type === 'encounter') return 'field';
+    return 'field';
   }
 
   private rebuildTarget(key: string, visual: ActionVisualDefinition, isMonster: boolean): void {

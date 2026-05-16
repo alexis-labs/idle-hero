@@ -1,4 +1,5 @@
 import type { GameState } from '../types/game';
+import { normalizeMapState } from '../data/map';
 import { applyOfflineProgression } from './offlineProgression';
 import { createInitialState, SAVE_VERSION } from './stateUtils';
 
@@ -15,7 +16,8 @@ function hydrateSave(candidate: Partial<GameState> | null, now = Date.now()): Ga
     skills: { ...base.skills, ...(candidate.skills ?? {}) },
     bank: { ...base.bank, ...(candidate.bank ?? {}) },
     equipment: { ...base.equipment, ...(candidate.equipment ?? {}) },
-    combat: { ...base.combat, ...(candidate.combat ?? {}) },
+    map: normalizeMapState(candidate.map),
+    combat: { ...base.combat, ...(candidate.combat ?? {}), mapTileKey: candidate.combat?.mapTileKey ?? null },
     pets: { ...base.pets, ...(candidate.pets ?? {}) },
     achievements: { ...base.achievements, ...(candidate.achievements ?? {}) },
     shopPurchases: { ...base.shopPurchases, ...(candidate.shopPurchases ?? {}) },
@@ -25,6 +27,14 @@ function hydrateSave(candidate: Partial<GameState> | null, now = Date.now()): Ga
     createdAt: candidate.createdAt ?? base.createdAt,
     lastSavedAt: candidate.lastSavedAt ?? base.lastSavedAt,
   };
+
+  if ((candidate.activeView as string | undefined) === 'combat') {
+    merged.activeView = 'map';
+  }
+
+  if (merged.combat.mode !== 'idle' && !merged.combat.mapTileKey) {
+    merged.combat = { ...base.combat };
+  }
 
   return merged;
 }

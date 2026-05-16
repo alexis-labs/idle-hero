@@ -28,7 +28,7 @@ export type SkillId =
   | 'township'
   | 'atlas';
 
-export type ViewId = 'skills' | 'combat' | 'bank' | 'shop' | 'achievements' | 'settings';
+export type ViewId = 'skills' | 'combat' | 'map' | 'bank' | 'shop' | 'achievements' | 'settings';
 export type GameMode = 'standard' | 'hardcore' | 'adventure';
 export type ActionId = string;
 export type ItemId = string;
@@ -36,6 +36,8 @@ export type MonsterId = string;
 export type DungeonId = string;
 export type PetId = string;
 export type AchievementId = string;
+export type MapTileKey = string;
+export type MapPuzzleId = string;
 
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type ItemType = 'resource' | 'material' | 'food' | 'equipment' | 'rune' | 'consumable' | 'pet' | 'relic';
@@ -161,6 +163,76 @@ export interface DungeonDefinition {
   color: string;
 }
 
+export interface MapCoord {
+  x: number;
+  y: number;
+}
+
+export type MapTileType =
+  | 'origin'
+  | 'plains'
+  | 'grove'
+  | 'mine'
+  | 'coast'
+  | 'ruins'
+  | 'shrine'
+  | 'npc'
+  | 'puzzle'
+  | 'treasure'
+  | 'encounter'
+  | 'boss'
+  | 'locked';
+
+export interface MapTile {
+  key: MapTileKey;
+  coord: MapCoord;
+  type: MapTileType;
+  name: string;
+  description: string;
+  biome: string;
+  color: string;
+  danger: number;
+  travelTimeMs: number;
+  monsterId?: MonsterId;
+  puzzleId?: MapPuzzleId;
+  rewards?: RewardRoll[];
+  secret?: boolean;
+}
+
+export interface MapPuzzleChoice {
+  id: string;
+  label: string;
+}
+
+export interface MapPuzzleDefinition {
+  id: MapPuzzleId;
+  title: string;
+  prompt: string;
+  choices: MapPuzzleChoice[];
+  solutionId: string;
+  solvedText: string;
+  failureText: string;
+  rewards: RewardRoll[];
+}
+
+export interface MapState {
+  seed: number;
+  position: MapCoord;
+  destination: MapCoord | null;
+  travelProgressMs: number;
+  travelIntervalMs: number;
+  revealed: Record<MapTileKey, true>;
+  explored: Record<MapTileKey, true>;
+  completed: Record<MapTileKey, true>;
+  knownTiles: Record<MapTileKey, MapTile>;
+  selectedTileKey: MapTileKey | null;
+  activeTileKey: MapTileKey | null;
+  activePuzzleId: MapPuzzleId | null;
+  secretsFound: number;
+  bossesDefeated: number;
+  mapLog: LogEntry[];
+}
+
 export type BankState = Record<ItemId, number>;
 
 export interface CombatHit {
@@ -182,6 +254,7 @@ export interface CombatState {
   playerProgressMs: number;
   monsterProgressMs: number;
   lastHit: CombatHit | null;
+  mapTileKey: MapTileKey | null;
 }
 
 export interface OfflineRewardLine {
@@ -223,6 +296,7 @@ export interface GameState {
   skills: Record<SkillId, SkillState>;
   bank: BankState;
   equipment: Record<EquipmentSlot, ItemId | null>;
+  map: MapState;
   combat: CombatState;
   pets: Record<PetId, boolean>;
   achievements: Record<AchievementId, boolean>;

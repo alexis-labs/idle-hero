@@ -1,10 +1,11 @@
 import { achievements } from '../data/achievements';
 import { equipmentSlots, items, startingBank } from '../data/items';
+import { createInitialMapState } from '../data/map';
 import { skills, skillsById } from '../data/skills';
 import type { EquipmentSlot, GameState, ItemId, ItemQuantity, LogEntry, RewardRoll, SkillId } from '../types/game';
 import { getUsedBankSlots, levelForXp, rollQuantity, xpForLevel } from './formulas';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export function cloneState(state: GameState): GameState {
   return JSON.parse(JSON.stringify(state)) as GameState;
@@ -31,13 +32,14 @@ export function createInitialState(now = Date.now()): GameState {
     mode: 'standard',
     gp: 50,
     bankSlots: 28,
-    activeView: 'skills',
+    activeView: 'map',
     selectedSkill: 'woodcutting',
     activeActionId: null,
     actionProgressMs: 0,
     skills: skillState,
     bank: { ...startingBank },
     equipment,
+    map: createInitialMapState(),
     combat: {
       mode: 'idle',
       selectedMonsterId: 'training_dummy',
@@ -50,6 +52,7 @@ export function createInitialState(now = Date.now()): GameState {
       playerProgressMs: 0,
       monsterProgressMs: 0,
       lastHit: null,
+      mapTileKey: null,
     },
     pets: {},
     achievements: achievements.reduce<Record<string, boolean>>((acc, achievement) => {
@@ -62,7 +65,7 @@ export function createInitialState(now = Date.now()): GameState {
         id: `log-${now}`,
         time: now,
         tone: 'info',
-        message: 'Welcome to Idle Hero. Pick a skill or start combat.',
+        message: 'Welcome to Idle Hero. The map begins at camp. Choose a route and uncover what waits in the fog.',
       },
     ],
     offlineSummary: null,

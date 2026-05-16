@@ -41,6 +41,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { ActionVisualDefinition, ItemId, SkillId } from '../types/game';
+import type { MapTileType } from '../types/game';
 
 const skillIconMap: Record<SkillId, LucideIcon> = {
   attack: Swords,
@@ -133,6 +134,22 @@ const actionShapeIconMap: Record<ActionVisualDefinition['shape'], LucideIcon> = 
   field: Compass,
 };
 
+const mapTileIconMap: Record<MapTileType, LucideIcon> = {
+  origin: Compass,
+  plains: Sprout,
+  grove: TreePine,
+  mine: Pickaxe,
+  coast: Waves,
+  ruins: Landmark,
+  shrine: Sun,
+  npc: HandCoins,
+  puzzle: KeyRound,
+  treasure: Package,
+  encounter: Swords,
+  boss: Target,
+  locked: Shield,
+};
+
 export function getSkillIcon(skillId: SkillId): LucideIcon {
   return skillIconMap[skillId] ?? CircleDot;
 }
@@ -147,6 +164,10 @@ export function getCategoryIcon(category: string): LucideIcon {
 
 export function getActionShapeIcon(shape: ActionVisualDefinition['shape']): LucideIcon {
   return actionShapeIconMap[shape] ?? Activity;
+}
+
+export function getMapTileIcon(type: MapTileType): LucideIcon {
+  return mapTileIconMap[type] ?? CircleDot;
 }
 
 export { Coins };

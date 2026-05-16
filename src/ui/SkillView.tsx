@@ -37,11 +37,11 @@ function ActionCard({ action }: { action: ActionDefinition }) {
   const blockedByOtherSkill = Boolean(activeSkillingAction && activeSkillingAction.skillId !== action.skillId);
   const blockedByCombat = state.combat.mode !== 'idle';
   const levelLocked = level < action.levelRequired;
-  const canStart = !levelLocked && !blockedByOtherSkill && !blockedByCombat;
+  const canStart = !levelLocked && !blockedByCombat;
   const progress = active ? state.actionProgressMs / action.intervalMs : 0;
   const ActionIcon = getActionShapeIcon(action.visual.shape);
-  const startLabel = levelLocked ? `Level ${action.levelRequired}` : blockedByCombat ? 'Combat active' : blockedByOtherSkill ? 'Skill active' : 'Start';
-  const disabledReason = blockedByCombat ? 'Stop combat first' : blockedByOtherSkill && activeSkillName ? `Stop ${activeSkillName} first` : undefined;
+  const startLabel = levelLocked ? `Level ${action.levelRequired}` : blockedByCombat ? 'Combat active' : blockedByOtherSkill ? 'Switch' : 'Start';
+  const disabledReason = blockedByCombat ? 'Stop combat first' : blockedByOtherSkill && activeSkillName ? `Stops ${activeSkillName}` : undefined;
 
   return (
     <article className={`action-card ${active ? 'active' : ''}`} style={{ '--card-color': action.visual.color } as CSSProperties}>
