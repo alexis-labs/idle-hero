@@ -28,7 +28,7 @@ export function BankView() {
   const selected = selectedItemId ? entries.find((entry) => entry.itemId === selectedItemId) : null;
 
   return (
-    <section className="main-view bank-view">
+    <section className={`main-view bank-view ${state.settings.denseBank ? 'dense-bank-view' : ''}`}>
       <div className="view-header">
         <div>
           <span className="eyebrow">Inventory</span>

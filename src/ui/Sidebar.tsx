@@ -35,7 +35,12 @@ export function Sidebar() {
 
       <div className="skill-scroll">
         {skillGroups.map((group) => {
-          const groupSkills = skills.filter((skill) => skill.category === group.id);
+          const groupSkills = skills.filter((skill) => {
+            const playable = skill.implemented && state.skills[skill.id]?.unlocked;
+            return skill.category === group.id && (!state.settings.hideLockedSkills || playable);
+          });
+          if (!groupSkills.length) return null;
+
           return (
             <section key={group.id} className="skill-group">
               <h2>{group.label}</h2>

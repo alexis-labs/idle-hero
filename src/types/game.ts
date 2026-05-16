@@ -281,6 +281,13 @@ export interface LogEntry {
 export interface GameSettings {
   reduceMotion: boolean;
   compactNumbers: boolean;
+  showBackgroundScene: boolean;
+  highContrastMode: boolean;
+  denseBank: boolean;
+  hideLockedSkills: boolean;
+  showMapLabels: boolean;
+  showLogTimestamps: boolean;
+  confirmReset: boolean;
 }
 
 export interface GameState {

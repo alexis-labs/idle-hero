@@ -93,7 +93,7 @@ export function RightPanel() {
         <div className="activity-log">
           {state.activityLog.slice(0, 10).map((entry) => (
             <div key={entry.id} className={`log-entry ${entry.tone}`}>
-              <span>{new Date(entry.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              {state.settings.showLogTimestamps && <span>{new Date(entry.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
               <p>{entry.message}</p>
             </div>
           ))}

@@ -1,13 +1,12 @@
 import { Compass, HeartPulse, Map as MapIcon, Search, Shield, Square, Swords, Utensils } from 'lucide-react';
 import type { CSSProperties } from 'react';
-import { useCallback } from 'react';
+import { useMemo } from 'react';
 import { useGame } from '../app/useGameStore';
-import { coordKey, generateMapTile, getMapTile, isAdjacentCoord, mapPuzzles, mapTileMeta, parseCoordKey } from '../data/map';
-import { MapCanvas } from '../game/MapCanvas';
+import { coordKey, generateMapTile, getMapTile, getVisibleCoords, isAdjacentCoord, isSameCoord, mapPuzzles, mapTileMeta, MAP_VIEW_RADIUS, parseCoordKey } from '../data/map';
 import { items } from '../data/items';
 import { monstersById } from '../data/monsters';
 import { formatNumber, getMaxPlayerHp, getPlayerCombatStats } from '../systems/formulas';
-import type { MapCoord, MapTile, RewardRoll } from '../types/game';
+import type { MapTile, RewardRoll } from '../types/game';
 import { Coins, getMapTileIcon } from './iconMaps';
 import { ItemIcon } from './ItemIcon';
 import { ProgressBar } from './ProgressBar';
@@ -74,6 +73,7 @@ function EncounterPanel() {
 export function MapView() {
   const { state, dispatch } = useGame();
   const currentKey = coordKey(state.map.position);
+  const destinationKey = state.map.destination ? coordKey(state.map.destination) : null;
   const selectedKey = state.map.selectedTileKey ?? currentKey;
   const selectedCoord = parseCoordKey(selectedKey);
   const selectedTile = state.map.knownTiles[selectedKey] ?? generateMapTile(state.map.seed, selectedCoord);
@@ -86,16 +86,34 @@ export function MapView() {
   const currentTile = getMapTile(state.map, state.map.position);
   const travelProgress = state.map.destination ? state.map.travelProgressMs / Math.max(1, state.map.travelIntervalMs) : 0;
 
-  const handleCanvasSelect = useCallback((coord: MapCoord) => {
-    dispatch({ type: 'selectMapTile', x: coord.x, y: coord.y });
-  }, [dispatch]);
+  const visibleTiles = useMemo(() => {
+    return getVisibleCoords(state.map.position, MAP_VIEW_RADIUS).map((coord) => {
+      const key = coordKey(coord);
+      return {
+        coord,
+        key,
+        tile: state.map.knownTiles[key] ?? generateMapTile(state.map.seed, coord),
+        revealed: Boolean(state.map.revealed[key]),
+        completed: Boolean(state.map.completed[key]),
+        current: isSameCoord(coord, state.map.position),
+        destination: destinationKey === key,
+        selected: selectedKey === key,
+        adjacent: isAdjacentCoord(state.map.position, coord),
+      };
+    });
+  }, [destinationKey, selectedKey, state.map.completed, state.map.knownTiles, state.map.position, state.map.revealed, state.map.seed]);
 
-  const handleCanvasTravel = useCallback((coord: MapCoord) => {
-    dispatch({ type: 'startMapTravel', x: coord.x, y: coord.y });
-  }, [dispatch]);
+  const handleTileClick = (tile: MapTile, revealed: boolean, adjacent: boolean, current: boolean) => {
+    if (!revealed) return;
+    if (adjacent && !current && !state.map.destination && state.combat.mode === 'idle') {
+      dispatch({ type: 'startMapTravel', x: tile.coord.x, y: tile.coord.y });
+      return;
+    }
+    dispatch({ type: 'selectMapTile', x: tile.coord.x, y: tile.coord.y });
+  };
 
   return (
-    <section className="main-view map-view">
+    <section className={`main-view map-view ${state.settings.showMapLabels ? '' : 'hide-map-labels'}`}>
       <div className="view-header" style={{ '--view-color': currentTile.color } as CSSProperties}>
         <div className="view-title-block">
           <span className="view-icon"><MapIcon size={24} strokeWidth={2.35} /></span>
@@ -128,7 +146,24 @@ export function MapView() {
       </div>
 
       <div className="map-layout">
-        <MapCanvas state={state} onSelectTile={handleCanvasSelect} onTravelTo={handleCanvasTravel} />
+        <div className="adventure-grid" style={{ '--map-size': MAP_VIEW_RADIUS * 2 + 1 } as CSSProperties}>
+          {visibleTiles.map(({ tile, key, revealed, completed, current, destination, selected, adjacent }) => {
+            const Icon = getMapTileIcon(tile.type);
+            return (
+              <button
+                key={key}
+                className={`map-tile ${revealed ? 'revealed' : 'hidden'} ${current ? 'current' : ''} ${destination ? 'destination' : ''} ${selected ? 'selected' : ''} ${completed ? 'completed' : ''} ${adjacent ? 'adjacent' : ''} ${tile.type}`}
+                style={{ '--tile-color': tile.color } as CSSProperties}
+                onClick={() => handleTileClick(tile, revealed, adjacent, current)}
+                title={revealed ? tile.name : 'Uncharted fog'}
+              >
+                {revealed ? <Icon size={18} /> : <span className="fog-dot" />}
+                {state.settings.showMapLabels && <span>{revealed ? mapTileMeta[tile.type].label : '?'}</span>}
+                {tile.secret && revealed && !completed && <small>?</small>}
+              </button>
+            );
+          })}
+        </div>
 
         <aside className="map-detail-panel">
           {selectedRevealed ? (
@@ -188,7 +223,7 @@ export function MapView() {
           <div className="panel-title-row"><Utensils size={18} /><h3>Expedition log</h3></div>
           {(state.map.mapLog.length ? state.map.mapLog : state.activityLog).slice(0, 6).map((entry) => (
             <div key={entry.id} className={`log-entry ${entry.tone}`}>
-              <span>{new Date(entry.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              {state.settings.showLogTimestamps && <span>{new Date(entry.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
               <p>{entry.message}</p>
             </div>
           ))}

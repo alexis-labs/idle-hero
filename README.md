@@ -1,34 +1,46 @@
 # Idle Hero
 
-Idle Hero is a browser-based idle RPG prototype built with React, TypeScript, Vite, and Three.js. The project focuses on long-form skill progression, data-driven content, local saves, offline progress, and a compact game UI that can grow over time.
+[![CI](https://github.com/alexis-labs/idle-hero/actions/workflows/ci.yml/badge.svg)](https://github.com/alexis-labs/idle-hero/actions/workflows/ci.yml)
 
-> Project status: early prototype. The core loop is playable, but balance, content depth, accessibility, tests, and polish are still evolving.
+Idle Hero is a browser-based idle RPG prototype built with React, TypeScript, Vite, and Three.js. The game combines long-form skill progression, a procedural adventure map, local saves, offline progress, and data-driven content that contributors can extend without touching every part of the app.
 
-## Features
+The project is intentionally small enough to understand, but structured like a real game codebase: content lives in data files, reusable rules live in systems, React renders the interface, and Three.js powers the ambient activity scene.
 
-- Data-driven skills, items, actions, monsters, drops, equipment, map tiles, puzzles, shop upgrades, and achievements.
-- Three.js hex-atlas adventure map with fog-of-war, timed travel, pan/zoom controls, secrets, puzzles, NPC events, treasure, and embedded encounters.
-- Idle skilling loop with XP, mastery XP, resource gathering, processing, crafting, and bank storage.
-- Tick-based encounter combat inside the map, with equipment requirements, auto-eating food, monster drops, and boss tiles.
-- Local save system with export/import support and capped offline progression.
-- Three.js 2D orthographic scenes for the ambient activity backdrop and the interactive map canvas.
-- React UI split into focused views for the map, skills, bank, shop, achievements, settings, and activity logs.
+## Project Status
+
+Idle Hero is an early playable prototype. The core loop works, but balance, content depth, accessibility, automated tests, and visual polish are still active areas of development.
+
+Current focus:
+
+- Make the first hour of progression more readable and satisfying.
+- Expand the procedural map with more meaningful tile events, puzzles, encounters, and rewards.
+- Add focused tests around formulas, saves, offline progression, map helpers, and combat.
+- Improve contributor documentation so new people can add content safely.
+
+## What You Can Play Today
+
+- Explore a large square-grid adventure map with fog-of-war, timed travel, secrets, puzzles, NPC events, treasure, encounters, and boss tiles.
+- Train idle skills through gathering, processing, crafting, and utility actions.
+- Collect resources, craft equipment, cook food, manage a bank, and sell items for GP.
+- Fight tick-based map encounters with equipment stats, auto-eating, drops, and combat XP.
+- Unlock achievements and buy shop upgrades.
+- Keep progress through browser `localStorage`, export/import saves, and capped offline progression.
 
 ## Tech Stack
 
-- React 18
-- TypeScript
-- Vite
-- Three.js
-- lucide-react icons
-- Browser `localStorage` for saves
+- React 18 for the interface.
+- TypeScript for shared game models and safer content data.
+- Vite for local development and production builds.
+- Three.js for the ambient activity scene.
+- lucide-react for UI icons.
+- Browser `localStorage` for client-side saves.
 
 ## Quick Start
 
 Prerequisites:
 
-- Node.js 18 or newer
-- npm
+- Node.js 18 or newer.
+- npm.
 
 Install dependencies and start the local development server:
 
@@ -37,57 +49,94 @@ npm install
 npm run dev
 ```
 
-The Vite server runs on `http://127.0.0.1:5173` by default.
+Open `http://127.0.0.1:5173` after Vite starts.
 
 ## Scripts
 
 | Command | Description |
 | --- | --- |
 | `npm run dev` | Start the Vite development server. |
+| `npm run typecheck` | Run TypeScript project checks. |
 | `npm run build` | Type-check the project and create a production build. |
 | `npm run preview` | Preview the production build locally. |
 
-## Project Structure
+## Project Map
 
 ```text
 src/
-	app/       React game provider, reducer, and dispatch actions
-	data/      Declarative game content such as skills, items, actions, monsters, map generation, shop entries, and achievements
-	game/      Three.js canvas integration, ambient scene rendering, and the interactive map atlas
-	styles/    Global application styles
-	systems/   Game logic for map travel, encounters, idle actions, formulas, saves, offline progress, achievements, and state utilities
-	types/     Shared TypeScript game model definitions
-	ui/        React views and reusable UI components
+  app/       React game provider, reducer, dispatch actions, autosave, and tick loop
+  data/      Declarative content: skills, items, actions, monsters, map generation, shop, achievements
+  game/      Three.js scene integration for the ambient activity view
+  styles/    Global application styles
+  systems/   Game rules: map travel, encounters, idle actions, formulas, saves, offline progress, achievements
+  types/     Shared TypeScript game model definitions
+  ui/        React views and reusable UI components
 ```
 
 For a deeper technical overview, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Development Notes
+## How the Game Is Organized
 
-- Most new gameplay content should start in `src/data` and reuse the existing types in `src/types/game.ts`.
-- Core gameplay behavior belongs in `src/systems`; UI components should mostly dispatch actions and render state.
-- Saves are client-side only and stored in browser `localStorage` under the current save key.
-- Offline progression is capped at 24 hours and currently applies to active skilling actions and pending map travel.
-- There is no backend service, account system, or multiplayer layer.
+Most gameplay content is declarative. If you want to add a new item, action, monster, map event, shop upgrade, or achievement, start in `src/data` and use the types from `src/types/game.ts`.
 
-## Contributing
+Reusable game rules belong in `src/systems`. These files process the state changes behind the UI, such as skill action completions, map travel, encounter resolution, rewards, saves, offline progression, and achievement sync.
 
-Contributions are welcome. Good first issues include small data additions, balance tweaks, UI polish, accessibility improvements, documentation updates, and bug fixes with clear reproduction steps.
+React components in `src/ui` should mostly render the current state and dispatch actions. Canvas rendering lives in `src/game`, where React passes game state into Three.js scene classes.
 
-Before opening a pull request, please read [CONTRIBUTING.md](CONTRIBUTING.md) and run:
+## Good First Contributions
+
+Small, focused changes are the best way to get involved:
+
+- Add a new skill action using existing items and reward patterns.
+- Add or tune item data, sell values, descriptions, icons, rarity, or equipment stats.
+- Add a monster, encounter reward, map tile flavor, NPC event, puzzle, or achievement.
+- Improve responsive layout, keyboard navigation, focus states, or reduced-motion behavior.
+- Fix a bug with clear reproduction steps.
+- Improve documentation, setup notes, code comments, or contributor examples.
+- Add tests for formulas, save hydration, offline progression, or deterministic map helpers.
+
+## Contribution Workflow
+
+The `main` branch is protected by GitHub rulesets. Community changes should go through pull requests.
+
+1. Fork the repository.
+2. Create a focused branch from `main`.
+3. Make your change and keep it small enough to review comfortably.
+4. Run the build locally:
 
 ```bash
 npm run build
 ```
 
+5. Open a pull request and fill in the PR template.
+6. Wait for the required `Build` check to pass.
+7. Address review comments and resolve review threads.
+
+Pull requests require at least one approval before merging. Force pushes and direct destructive changes to `main` are blocked.
+
+For more detail, read [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Development Notes
+
+- Saves are client-side only and stored in browser `localStorage`.
+- Offline progression is capped at 24 hours and currently applies to active skilling actions and pending map travel.
+- There is no backend service, account system, payment system, or multiplayer layer.
+- Save-related changes should be tested with a fresh save and, when possible, an imported existing save.
+- Balance changes should mention their expected impact on XP, GP, drops, food usage, combat difficulty, or progression speed.
+
 ## Roadmap Ideas
 
-- Expand implemented skills, action chains, map biomes, NPC stories, puzzle pools, and secret tile events.
-- Add tests around formulas, save hydration, offline progression, and combat outcomes.
-- Improve keyboard accessibility and reduced-motion behavior.
-- Add more monsters, boss routes, achievements, pets, and item tiers.
-- Add contributor-facing balance notes for XP, rewards, and combat tuning.
+- Expand implemented skills, action chains, item tiers, and crafting routes.
+- Add more map biomes, NPC stories, puzzle pools, secret tile events, boss routes, and rewards.
+- Add tests around formulas, save hydration, offline progression, map helpers, and combat outcomes.
+- Improve keyboard accessibility, semantic markup, focus handling, and reduced-motion behavior.
+- Add contributor-facing balance notes for XP, intervals, rewards, combat stats, and economy tuning.
+- Add screenshots or a short gameplay capture to help new visitors understand the project faster.
+
+## Community Standards
+
+Please keep issues, pull requests, and reviews respectful and constructive. See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for the expected community behavior and [SECURITY.md](SECURITY.md) for vulnerability reporting guidance.
 
 ## License
 
-No open-source license has been selected yet. Before publishing a public release or accepting broad external contributions, add a `LICENSE` file that matches the intended reuse terms.
+No open-source license has been selected yet. Before accepting broad external contributions or encouraging reuse outside GitHub collaboration, add a `LICENSE` file that matches the intended project terms.

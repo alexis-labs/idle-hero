@@ -30,6 +30,12 @@ export function TopBar() {
     reader.readAsText(file);
   };
 
+  const resetGame = () => {
+    if (!state.settings.confirmReset || window.confirm('Reset Idle Hero?')) {
+      dispatch({ type: 'resetGame' });
+    }
+  };
+
   return (
     <header className="top-bar">
       <div className="brand-lockup">
@@ -49,7 +55,7 @@ export function TopBar() {
         <button title="Save now" className="icon-button" onClick={() => saveGame(state)}><Save size={18} /></button>
         <button title="Export save" className="icon-button" onClick={exportCurrentSave}><Download size={18} /></button>
         <button title="Import save" className="icon-button" onClick={() => inputRef.current?.click()}><Upload size={18} /></button>
-        <button title="Reset game" className="icon-button danger" onClick={() => window.confirm('Reset Idle Hero?') && dispatch({ type: 'resetGame' })}><RotateCcw size={18} /></button>
+        <button title="Reset game" className="icon-button danger" onClick={resetGame}><RotateCcw size={18} /></button>
         <input ref={inputRef} hidden type="file" accept="application/json" onChange={(event) => importSelectedSave(event.target.files?.[0])} />
       </div>
     </header>

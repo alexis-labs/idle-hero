@@ -1,6 +1,6 @@
 import type { MapCoord, MapPuzzleDefinition, MapState, MapTile, MapTileType, MonsterId, RewardRoll } from '../types/game';
 
-export const MAP_VIEW_RADIUS = 4;
+export const MAP_VIEW_RADIUS = 6;
 export const BASE_TRAVEL_INTERVAL_MS = 2200;
 
 export const mapTileMeta: Record<MapTileType, { label: string; color: string; short: string }> = {

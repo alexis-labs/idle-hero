@@ -72,6 +72,13 @@ export function createInitialState(now = Date.now()): GameState {
     settings: {
       reduceMotion: false,
       compactNumbers: true,
+      showBackgroundScene: true,
+      highContrastMode: false,
+      denseBank: false,
+      hideLockedSkills: false,
+      showMapLabels: true,
+      showLogTimestamps: true,
+      confirmReset: true,
     },
     createdAt: now,
     lastSavedAt: now,

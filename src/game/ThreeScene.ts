@@ -189,20 +189,21 @@ export class IdleHeroScene {
   private updateVisuals(time: number): void {
     const state = this.latestState;
     if (!state) return;
+    const motionScale = state.settings.reduceMotion ? 0 : 1;
 
-    const pulse = Math.sin(time * 0.004) * 0.05;
+    const pulse = Math.sin(time * 0.004) * 0.05 * motionScale;
     this.hero.position.y = -0.35 + pulse;
-    this.hero.rotation.z = Math.sin(time * 0.002) * 0.025;
+    this.hero.rotation.z = Math.sin(time * 0.002) * 0.025 * motionScale;
 
     const visual = this.getCurrentVisual(state);
     if (visual.key !== this.targetKey) {
       this.rebuildTarget(visual.key, visual.definition, visual.isMonster);
     }
 
-    const activityPulse = visual.progress > 0.05 ? Math.sin(time * 0.012) * 0.05 * visual.progress : 0;
-    this.target.position.set(1.45, -0.35 + Math.sin(time * 0.003) * 0.06, 0);
+    const activityPulse = visual.progress > 0.05 ? Math.sin(time * 0.012) * 0.05 * visual.progress * motionScale : 0;
+    this.target.position.set(1.45, -0.35 + Math.sin(time * 0.003) * 0.06 * motionScale, 0);
     this.target.scale.setScalar(1 + activityPulse);
-    this.target.rotation.z = visual.isMonster ? Math.sin(time * 0.002) * 0.06 : Math.sin(time * 0.0014) * 0.025;
+    this.target.rotation.z = motionScale * (visual.isMonster ? Math.sin(time * 0.002) * 0.06 : Math.sin(time * 0.0014) * 0.025);
     this.targetShadow.scale.x = 1 + visual.progress * 0.22;
     this.targetShadow.scale.y = 0.2 + visual.progress * 0.05;
 
@@ -213,9 +214,10 @@ export class IdleHeroScene {
     (this.progressFill.material as THREE.MeshBasicMaterial).color.copy(color);
 
     this.progressFill.scale.x = Math.max(0.001, visual.progress);
-    this.updateEffectStrips(time, visual.progress, color, visual.isMonster);
+    this.updateEffectStrips(time, visual.progress, color, visual.isMonster, motionScale);
 
     this.particles.children.forEach((child, index) => {
+      if (!motionScale) return;
       child.position.y += Math.sin(time * 0.001 + index) * 0.0015;
       child.position.x += 0.002 + Math.cos(time * 0.0008 + index) * 0.0012;
       if (child.position.x > 5.2) child.position.x = -5.2;
@@ -223,17 +225,17 @@ export class IdleHeroScene {
     });
   }
 
-  private updateEffectStrips(time: number, progress: number, color: THREE.Color, isMonster: boolean): void {
+  private updateEffectStrips(time: number, progress: number, color: THREE.Color, isMonster: boolean, motionScale: number): void {
     this.effectStrips.children.forEach((child, index) => {
       const strip = child as THREE.Mesh;
-      const angle = (index / this.effectStrips.children.length) * Math.PI * 2 + time * 0.0015;
+      const angle = (index / this.effectStrips.children.length) * Math.PI * 2 + time * 0.0015 * motionScale;
       const radius = 0.75 + progress * 0.75 + (index % 3) * 0.08;
       strip.position.set(1.45 + Math.cos(angle) * radius, -0.35 + Math.sin(angle) * radius * 0.45, 0.55);
       strip.rotation.z = angle + (isMonster ? 0.9 : 0.35);
       strip.scale.x = 0.45 + progress * 1.2;
       strip.scale.y = isMonster ? 1.3 : 1;
       const material = strip.material as THREE.MeshBasicMaterial;
-      material.opacity = progress > 0.03 ? 0.12 + progress * (isMonster ? 0.34 : 0.22) : 0;
+      material.opacity = motionScale && progress > 0.03 ? 0.12 + progress * (isMonster ? 0.34 : 0.22) : 0;
       material.color.copy(color).lerp(new THREE.Color(index % 2 === 0 ? '#facc15' : '#ffffff'), 0.2);
     });
   }

@@ -24,10 +24,16 @@ function CurrentView() {
 
 function GameShell() {
   const { state } = useGame();
+  const shellClassName = [
+    'app-shell',
+    state.settings.reduceMotion ? 'reduce-motion' : '',
+    state.settings.highContrastMode ? 'high-contrast' : '',
+    state.settings.showBackgroundScene ? '' : 'scene-disabled',
+  ].filter(Boolean).join(' ');
 
   return (
-    <div className="app-shell">
-      <GameCanvas state={state} />
+    <div className={shellClassName}>
+      {state.settings.showBackgroundScene && <GameCanvas state={state} />}
       <div className="ui-shell">
         <TopBar />
         <Sidebar />
