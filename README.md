@@ -13,13 +13,13 @@ Idle Hero is an early playable prototype. The core loop works, but balance, cont
 Current focus:
 
 - Make the first hour of progression more readable and satisfying.
-- Expand the procedural map with more meaningful tile events, puzzles, encounters, and rewards.
+- Expand fixed roguelike runs with more meaningful room events, puzzles, encounters, bosses, and rewards.
 - Add focused tests around formulas, saves, offline progression, map helpers, and combat.
 - Improve contributor documentation so new people can add content safely.
 
 ## What You Can Play Today
 
-- Explore a large square-grid adventure map with fog-of-war, timed travel, secrets, puzzles, NPC events, treasure, encounters, and boss tiles.
+- Explore fixed roguelike map runs with fog-of-war, timed travel, secrets, puzzles, NPC events, treasure, encounters, and a run boss.
 - Train idle skills through gathering, processing, crafting, and utility actions.
 - Collect resources, craft equipment, cook food, manage a bank, and sell items for GP.
 - Fight tick-based map encounters with equipment stats, auto-eating, drops, and combat XP.
@@ -89,7 +89,7 @@ Small, focused changes are the best way to get involved:
 
 - Add a new skill action using existing items and reward patterns.
 - Add or tune item data, sell values, descriptions, icons, rarity, or equipment stats.
-- Add a monster, encounter reward, map tile flavor, NPC event, puzzle, or achievement.
+- Add a monster, encounter reward, run tile flavor, NPC event, puzzle, or achievement.
 - Improve responsive layout, keyboard navigation, focus states, or reduced-motion behavior.
 - Fix a bug with clear reproduction steps.
 - Improve documentation, setup notes, code comments, or contributor examples.
@@ -119,7 +119,7 @@ For more detail, read [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Development Notes
 
 - Saves are client-side only and stored in browser `localStorage`.
-- Offline progression is capped at 24 hours and currently applies to active skilling actions and pending map travel.
+- Offline progression is capped at 24 hours and currently applies to active skilling actions and pending travel inside the current run.
 - There is no backend service, account system, payment system, or multiplayer layer.
 - Save-related changes should be tested with a fresh save and, when possible, an imported existing save.
 - Balance changes should mention their expected impact on XP, GP, drops, food usage, combat difficulty, or progression speed.
@@ -127,7 +127,7 @@ For more detail, read [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Roadmap Ideas
 
 - Expand implemented skills, action chains, item tiers, and crafting routes.
-- Add more map biomes, NPC stories, puzzle pools, secret tile events, boss routes, and rewards.
+- Add more run biomes, NPC stories, puzzle pools, secret room events, boss routes, and rewards.
 - Add tests around formulas, save hydration, offline progression, map helpers, and combat outcomes.
 - Improve keyboard accessibility, semantic markup, focus handling, and reduced-motion behavior.
 - Add contributor-facing balance notes for XP, intervals, rewards, combat stats, and economy tuning.
