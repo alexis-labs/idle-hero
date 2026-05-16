@@ -242,6 +242,13 @@ export function createRunMap(seed: number, bounds: MapBounds = DEFAULT_RUN_BOUND
   }, {});
 }
 
+function filterTileFlags(record: Record<string, true>, allowedKeys: Set<string>): Record<string, true> {
+  return Object.entries(record).reduce<Record<string, true>>((flags, [key, value]) => {
+    if (value && allowedKeys.has(key)) flags[key] = true;
+    return flags;
+  }, {});
+}
+
 export function createInitialMapState(seed = createMapSeed(), runId = 1, bounds: MapBounds = DEFAULT_RUN_BOUNDS): MapState {
   const position = { x: 0, y: 0 };
   const origin = { x: 0, y: 0 };
@@ -304,7 +311,7 @@ export function normalizeMapState(candidate?: Partial<MapState>): MapState {
     explored: { ...base.explored, ...(candidate.explored ?? {}) },
     completed: { ...base.completed, ...(candidate.completed ?? {}) },
     knownTiles: base.knownTiles,
-    bossTileKey: candidate.bossTileKey && base.knownTiles[candidate.bossTileKey] ? candidate.bossTileKey : base.bossTileKey,
+    bossTileKey: candidate.bossTileKey && base.knownTiles[candidate.bossTileKey]?.type === 'boss' ? candidate.bossTileKey : base.bossTileKey,
     runStartedAt: candidate.runStartedAt ?? base.runStartedAt,
     runCompletedAt: candidate.runCompletedAt ?? base.runCompletedAt,
     mapLog: candidate.mapLog ?? base.mapLog,
@@ -312,8 +319,14 @@ export function normalizeMapState(candidate?: Partial<MapState>): MapState {
 
   const currentKey = coordKey(map.position);
   if (!map.knownTiles[currentKey]) map.knownTiles[currentKey] = generateMapTile(map.seed, map.position, map.bossTileKey ? parseCoordKey(map.bossTileKey) : null);
+  const allowedKeys = new Set(Object.keys(map.knownTiles));
+  map.revealed = filterTileFlags(map.revealed, allowedKeys);
+  map.explored = filterTileFlags(map.explored, allowedKeys);
+  map.completed = filterTileFlags(map.completed, allowedKeys);
   map.revealed[currentKey] = true;
   map.explored[currentKey] = true;
+  if (!map.selectedTileKey || !map.knownTiles[map.selectedTileKey]) map.selectedTileKey = currentKey;
+  if (!map.activeTileKey || !map.knownTiles[map.activeTileKey]) map.activeTileKey = currentKey;
   return map;
 }
 
